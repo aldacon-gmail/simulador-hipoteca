@@ -625,7 +625,6 @@
     }
 
     function parseNum(str) {
-      // Accepta formats: 476.373,81 / 476373.81 / 1,33 / 1.33
       const s = str.trim();
       // Si té punt i coma: el punt és separador de milers, la coma és decimal
       if (s.includes('.') && s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.'));
