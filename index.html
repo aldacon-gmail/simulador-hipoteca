@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador d'Hipoteca</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    header .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #003087;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #003087;
+      letter-spacing: -0.3px;
+    }
+    header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #003087;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e8edf5;
+    }
+
+    /* ── Form ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: end;
+    }
+    @media (max-width: 640px) {
+      .form-grid-2 { grid-template-columns: 1fr; }
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-wrap .unit {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #999;
+      font-weight: 500;
+      pointer-events: none;
+    }
+    .field input {
+      width: 100%;
+      padding: 12px 40px 12px 14px;
+      border: 1.5px solid #dde2ea;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #1a1a2e;
+      background: #f8f9fc;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .field input:focus {
+      border-color: #003087;
+      box-shadow: 0 0 0 3px rgba(0,48,135,0.1);
+      background: white;
+    }
+
+    /* ── Button ── */
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: #003087;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 24px;
+      letter-spacing: 0.2px;
+      transition: background .2s, transform .1s;
+    }
+    .btn-primary:hover { background: #00256e; }
+    .btn-primary:active { transform: scale(0.99); }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 14px;
+      background: #00875a;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.2px;
+      transition: background .2s, transform .1s;
+    }
+    .btn-secondary:hover { background: #006644; }
+    .btn-secondary:active { transform: scale(0.99); }
+
+    /* ── Summary cards ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 640px) {
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+    .stat-card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border-top: 4px solid #e8edf5;
+    }
+    .stat-card.blue   { border-top-color: #003087; }
+    .stat-card.green  { border-top-color: #00875a; }
+    .stat-card.red    { border-top-color: #c0392b; }
+    .stat-card.purple { border-top-color: #7b2d8b; }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+    }
+    .stat-value .currency {
+      font-size: 16px;
+      font-weight: 600;
+      color: #999;
+      margin-left: 2px;
+    }
+    .stat-sub {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      height: 8px;
+      background: #f0f2f5;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #003087, #0052cc);
+      transition: width .6s ease;
+    }
+
+    /* ── Amortization table ── */
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    thead th {
+      background: #f0f2f5;
+      padding: 10px 14px;
+      text-align: right;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    thead th:first-child { text-align: left; }
+    tbody tr {
+      border-bottom: 1px solid #f0f2f5;
+      transition: background .15s;
+    }
+    tbody tr:hover { background: #f8f9fc; }
+    tbody tr.year-start td {
+      background: #e8edf5;
+      font-weight: 700;
+      color: #003087;
+    }
+    td {
+      padding: 9px 14px;
+      text-align: right;
+      color: #333;
+    }
+    td:first-child { text-align: left; color: #888; font-weight: 500; }
+    td.capital  { color: #003087; font-weight: 600; }
+    td.interest { color: #c0392b; font-weight: 600; }
+    td.quota    { color: #1a1a2e; font-weight: 700; }
+    td.pending  { color: #555; }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .page-btn {
+      padding: 7px 14px;
+      border: 1.5px solid #dde2ea;
+      border-radius: 8px;
+      background: white;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .page-btn:hover { border-color: #003087; color: #003087; }
+    .page-btn.active { background: #003087; border-color: #003087; color: white; }
+    .page-btn:disabled { opacity: 0.4; cursor: default; }
+    .page-info {
+      font-size: 13px;
+      color: #888;
+    }
+
+    /* ── Hidden ── */
+    .hidden { display: none; }
+
+    /* ── Error ── */
+    .error-msg {
+      color: #c0392b;
+      font-size: 13px;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    /* ── Parallel tables ── */
+    .tables-parallel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .parallel-card {
+      margin-bottom: 0;
+    }
+    @media (max-width: 900px) {
+      .tables-parallel { grid-template-columns: 1fr; }
+    }
+
+    /* ── Amortization savings section ── */
+    #amort-savings-section {
+      margin-top: 0;
+    }
+    .savings-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 640px) {
+      .savings-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Investment comparison ── */
+    .comparison-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .comparison-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #003087;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e8edf5;
+    }
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 640px) {
+      .comparison-grid { grid-template-columns: 1fr; }
+    }
+    .comparison-option {
+      border-radius: 12px;
+      padding: 20px 22px;
+      border: 2px solid #e8edf5;
+    }
+    .comparison-option.winner {
+      border-color: #00875a;
+      background: #f0faf5;
+    }
+    .comparison-option.loser {
+      border-color: #e8edf5;
+      background: #fafafa;
+      opacity: 0.85;
+    }
+    .comparison-option-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .comparison-option.winner .comparison-option-title {
+      color: #00875a;
+    }
+    .comparison-option-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: -0.4px;
+    }
+    .comparison-option-sub {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+    .comparison-verdict {
+      background: #f0faf5;
+      border-left: 4px solid #00875a;
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: #1a1a2e;
+      line-height: 1.5;
+    }
+    .comparison-verdict strong {
+      color: #00875a;
+    }
+    .comparison-verdict.inv-wins {
+      background: #fff8f0;
+      border-left-color: #e67e22;
+    }
+    .comparison-verdict.inv-wins strong {
+      color: #e67e22;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🏠</div>
+        <h1>Simulador d'Hipoteca</h1>
+      </div>
+      <p>Calcula la teva quota mensual i el quadre d'amortització complet</p>
+    </header>
+
+    <!-- Input card -->
+    <div class="card">
+      <div class="card-title">Dades de la hipoteca</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Import pendent</label>
+          <div class="input-wrap">
+            <input type="text" inputmode="decimal" id="capital" placeholder="200.000,00" />
+            <span class="unit">€</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Mesos restants</label>
+          <div class="input-wrap">
+            <input type="text" inputmode="numeric" id="mesos" placeholder="240" />
+            <span class="unit">m</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tipus d'interès anual (TIN)</label>
+          <div class="input-wrap">
+            <input type="text" inputmode="decimal" id="interes" placeholder="3,50" />
+            <span class="unit">%</span>
+          </div>
+        </div>
+      </div>
+      <div id="error-msg" class="error-msg hidden"></div>
+      <button class="btn-primary" onclick="calcular()">Calcular</button>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="hidden">
+
+      <!-- Summary -->
+      <div class="summary-grid" style="margin-bottom:24px">
+        <div class="stat-card blue">
+          <div class="stat-label">Quota mensual</div>
+          <div class="stat-value" id="res-quota">—<span class="currency">€</span></div>
+          <div class="stat-sub">Pagament fix cada mes</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Total a pagar</div>
+          <div class="stat-value" id="res-total">—<span class="currency">€</span></div>
+          <div class="stat-sub" id="res-total-sub">—</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Total interessos</div>
+          <div class="stat-value" id="res-interessos">—<span class="currency">€</span></div>
+          <div class="stat-sub" id="res-int-pct">—</div>
+        </div>
+      </div>
+
+      <!-- Distribution bar -->
+      <div class="card" style="padding:24px 32px">
+        <div class="card-title">Distribució del pagament total</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#555;margin-bottom:6px">
+          <span>Capital <strong id="bar-cap-pct" style="color:#003087"></strong></span>
+          <span>Interessos <strong id="bar-int-pct" style="color:#c0392b"></strong></span>
+        </div>
+        <div style="height:12px;border-radius:6px;overflow:hidden;display:flex">
+          <div id="bar-capital"  style="background:#003087;transition:width .6s ease"></div>
+          <div id="bar-interest" style="background:#c0392b;transition:width .6s ease"></div>
+        </div>
+      </div>
+
+      <!-- ── Early repayment input ── -->
+      <div class="card">
+        <div class="card-title">Simulació d'amortització anticipada</div>
+        <p style="font-size:13px;color:#666;margin-bottom:20px">Introdueix l'import que vols amortitzar anticipadament. La quota mensual es manté igual i la hipoteca s'acaba abans.</p>
+        <div class="form-grid-2">
+          <div class="field">
+            <label>Import a amortitzar</label>
+            <div class="input-wrap">
+              <input type="text" inputmode="decimal" id="amort-import" placeholder="20.000,00" />
+              <span class="unit">€</span>
+            </div>
+          </div>
+          <div>
+            <button class="btn-secondary" onclick="calcularAmortitzacio()">Calcular estalvi</button>
+          </div>
+        </div>
+        <div id="amort-error-msg" class="error-msg hidden"></div>
+      </div>
+
+      <!-- ── Savings results (hidden until calculated) ── -->
+      <div id="amort-savings-section" class="hidden">
+
+        <!-- Savings summary cards -->
+        <div class="savings-grid">
+          <div class="stat-card green">
+            <div class="stat-label">Mesos estalviats</div>
+            <div class="stat-value" id="amort-mesos-estalviats">—</div>
+            <div class="stat-sub" id="amort-mesos-sub">—</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Interessos estalviats</div>
+            <div class="stat-value" id="amort-int-estalviats">—<span class="currency">€</span></div>
+            <div class="stat-sub" id="amort-int-sub">—</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">Nova data de fi</div>
+            <div class="stat-value" id="amort-nova-data" style="font-size:20px">—</div>
+            <div class="stat-sub" id="amort-data-sub">—</div>
+          </div>
+        </div>
+
+        <!-- Investment comparison -->
+        <div class="comparison-card">
+          <div class="comparison-title">Amortitzar vs Invertir els diners</div>
+          <p style="font-size:13px;color:#666;margin-bottom:20px">Si en lloc d'amortitzar col·loquesses el mateix capital a interès fix (mateix TIN) durant els mesos que dura la nova hipoteca, quin dels dos escenaris et beneficia més?</p>
+          <div class="comparison-grid">
+            <div class="comparison-option" id="cmp-amort-box">
+              <div class="comparison-option-title">Amortitzar anticipadament</div>
+              <div class="comparison-option-value" id="cmp-amort-value">—</div>
+              <div class="comparison-option-sub" id="cmp-amort-sub">Interessos estalviats</div>
+            </div>
+            <div class="comparison-option" id="cmp-inv-box">
+              <div class="comparison-option-title">Invertir a interès fix</div>
+              <div class="comparison-option-value" id="cmp-inv-value">—</div>
+              <div class="comparison-option-sub" id="cmp-inv-sub">—</div>
+            </div>
+          </div>
+          <div class="comparison-verdict" id="cmp-verdict"></div>
+        </div>
+
+        <!-- Side-by-side comparison tables -->
+        <div class="tables-parallel">
+
+          <!-- Original -->
+          <div class="card parallel-card">
+            <div class="card-title" style="color:#555">Quadre original</div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mes</th>
+                    <th>Quota</th>
+                    <th>Capital</th>
+                    <th>Interessos</th>
+                    <th>Pendent</th>
+                  </tr>
+                </thead>
+                <tbody id="orig-body"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="orig-pagination"></div>
+          </div>
+
+          <!-- Amortized -->
+          <div class="card parallel-card" style="border-top: 3px solid #00875a;">
+            <div class="card-title" style="color:#00875a">Quadre amb amortització anticipada</div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mes</th>
+                    <th>Quota</th>
+                    <th>Capital</th>
+                    <th>Interessos</th>
+                    <th>Pendent</th>
+                  </tr>
+                </thead>
+                <tbody id="amort-body"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="amort-pagination"></div>
+          </div>
+
+        </div><!-- /tables-parallel -->
+
+      </div><!-- /amort-savings-section -->
+
+    </div><!-- /results -->
+
+  </div><!-- /container -->
+
+  <script>
+    const ROWS_PER_PAGE = 24;
+    let tableData = [];
+
+    let amortData = [];
+    let pageOrig  = 1;
+    let pageAmort = 1;
+    let quotaStored = 0;
+    let capitalStored = 0;
+    let rStored = 0;
+
+    function fmt(n) {
+      return n.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function parseNum(str) {
+      // Accepta formats: 476.373,81 / 476373.81 / 1,33 / 1.33
+      const s = str.trim();
+      // Si té punt i coma: el punt és separador de milers, la coma és decimal
+      if (s.includes('.') && s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.'));
+      // Si té coma però no punt: la coma és decimal
+      if (s.includes(',')) return parseFloat(s.replace(',', '.'));
+      // Altrament: format estàndard
+      return parseFloat(s);
+    }
+
+    // ── Parametrized render functions ──────────────────────────────────────
+
+    function renderTable(data, page, tbodyId) {
+      const tbody = document.getElementById(tbodyId);
+      tbody.innerHTML = '';
+      const start = (page - 1) * ROWS_PER_PAGE;
+      const end   = Math.min(start + ROWS_PER_PAGE, data.length);
+
+      for (let i = start; i < end; i++) {
+        const row = data[i];
+        const tr = document.createElement('tr');
+        if (row.isYearStart) tr.classList.add('year-start');
+        tr.innerHTML = `
+          <td>${row.mes}</td>
+          <td class="quota">${fmt(row.quota)} €</td>
+          <td class="capital">${fmt(row.capital)} €</td>
+          <td class="interest">${fmt(row.interes)} €</td>
+          <td class="pending">${fmt(row.pendent)} €</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function renderPagination(data, page, pgId, onPageChange) {
+      const total = Math.ceil(data.length / ROWS_PER_PAGE);
+      const pg = document.getElementById(pgId);
+      pg.innerHTML = '';
+
+      if (total <= 1) return;
+
+      const prev = document.createElement('button');
+      prev.className = 'page-btn';
+      prev.textContent = '← Anterior';
+      prev.disabled = page === 1;
+      prev.onclick = () => onPageChange(page - 1);
+      pg.appendChild(prev);
+
+      const range = pageRange(page, total);
+      range.forEach(p => {
+        if (p === '…') {
+          const sp = document.createElement('span');
+          sp.className = 'page-info';
+          sp.textContent = '…';
+          pg.appendChild(sp);
+        } else {
+          const btn = document.createElement('button');
+          btn.className = 'page-btn' + (p === page ? ' active' : '');
+          btn.textContent = p;
+          btn.onclick = () => onPageChange(p);
+          pg.appendChild(btn);
+        }
+      });
+
+      const next = document.createElement('button');
+      next.className = 'page-btn';
+      next.textContent = 'Següent →';
+      next.disabled = page === total;
+      next.onclick = () => onPageChange(page + 1);
+      pg.appendChild(next);
+    }
+
+    function refreshOrigTable(p) {
+      pageOrig = p;
+      renderTable(tableData, pageOrig, 'orig-body');
+      renderPagination(tableData, pageOrig, 'orig-pagination', refreshOrigTable);
+    }
+
+    function refreshAmortTable(p) {
+      pageAmort = p;
+      renderTable(amortData, pageAmort, 'amort-body');
+      renderPagination(amortData, pageAmort, 'amort-pagination', refreshAmortTable);
+    }
+
+    // ── Main calculation ────────────────────────────────────────────────────
+
+    function calcular() {
+      const capital       = parseNum(document.getElementById('capital').value);
+      const mesos         = parseInt(document.getElementById('mesos').value);
+      const interessAnual = parseNum(document.getElementById('interes').value);
+
+      const errEl = document.getElementById('error-msg');
+      errEl.classList.add('hidden');
+
+      if (!capital || !mesos || !interessAnual || capital <= 0 || mesos <= 0 || interessAnual <= 0) {
+        errEl.textContent = 'Omple tots els camps amb valors vàlids.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const r = interessAnual / 100 / 12;
+      const quota = capital * (r * Math.pow(1 + r, mesos)) / (Math.pow(1 + r, mesos) - 1);
+      const totalPagar = quota * mesos;
+      const totalInteressos = totalPagar - capital;
+
+      // Store for amortization reuse
+      quotaStored   = quota;
+      capitalStored = capital;
+      rStored       = r;
+
+      // Build amortization table
+      tableData = buildTableData(capital, r, quota, mesos);
+
+      // Update summary
+      document.getElementById('res-quota').innerHTML = fmt(quota) + '<span class="currency">€</span>';
+      document.getElementById('res-total').innerHTML = fmt(totalPagar) + '<span class="currency">€</span>';
+      document.getElementById('res-total-sub').textContent = mesos + ' mesos · ' + (mesos/12).toFixed(1) + ' anys';
+      document.getElementById('res-interessos').innerHTML = fmt(totalInteressos) + '<span class="currency">€</span>';
+      document.getElementById('res-int-pct').textContent = ((totalInteressos / totalPagar) * 100).toFixed(1) + '% del total pagat';
+
+      // Distribution bar
+      const capPct = (capital / totalPagar * 100).toFixed(1);
+      const intPct = (totalInteressos / totalPagar * 100).toFixed(1);
+      document.getElementById('bar-capital').style.width  = capPct + '%';
+      document.getElementById('bar-interest').style.width = intPct + '%';
+      document.getElementById('bar-cap-pct').textContent  = capPct + '%';
+      document.getElementById('bar-int-pct').textContent  = intPct + '%';
+
+      // Reset early repayment section
+      document.getElementById('amort-savings-section').classList.add('hidden');
+      document.getElementById('amort-import').value = '';
+      document.getElementById('amort-error-msg').classList.add('hidden');
+
+      // Show results
+      document.getElementById('results').classList.remove('hidden');
+
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ── Build table rows from capital/r/quota ───────────────────────────────
+
+    function buildTableData(capital, r, quota, maxMesos) {
+      const rows = [];
+      let saldo = capital;
+      const startDate = new Date();
+      startDate.setDate(1);
+
+      const totalMesos = maxMesos !== undefined ? maxMesos : Infinity;
+
+      for (let i = 1; i <= totalMesos; i++) {
+        const intMes = saldo * r;
+        const capMes = quota - intMes;
+        saldo -= capMes;
+        if (saldo < 0.005) saldo = 0;
+
+        const d = new Date(startDate);
+        d.setMonth(d.getMonth() + i);
+        const mesLabel = d.toLocaleDateString('ca-ES', { month: 'short', year: 'numeric' });
+
+        rows.push({
+          num: i,
+          mes: mesLabel,
+          quota: quota,
+          capital: capMes,
+          interes: intMes,
+          pendent: saldo,
+          isYearStart: d.getMonth() === 0
+        });
+
+        if (saldo === 0) break;
+      }
+
+      return rows;
+    }
+
+    // ── Build amortized table (capital reduced, same quota) ─────────────────
+
+    function buildAmortData(capital, r, quota, amortImport) {
+      const newCapital = capital - amortImport;
+      return buildTableData(newCapital, r, quota, undefined);
+    }
+
+    // ── Early repayment calculation ─────────────────────────────────────────
+
+    function calcularAmortitzacio() {
+      const amortErrEl = document.getElementById('amort-error-msg');
+      amortErrEl.classList.add('hidden');
+
+      if (!quotaStored || !capitalStored || !rStored) {
+        amortErrEl.textContent = 'Primer has de calcular la hipoteca.';
+        amortErrEl.classList.remove('hidden');
+        return;
+      }
+
+      const amortImportStr = document.getElementById('amort-import').value;
+      if (!amortImportStr.trim()) {
+        amortErrEl.textContent = 'Introdueix l\'import a amortitzar.';
+        amortErrEl.classList.remove('hidden');
+        return;
+      }
+
+      const amortImport = parseNum(amortImportStr);
+      if (isNaN(amortImport) || amortImport <= 0) {
+        amortErrEl.textContent = 'Introdueix un import vàlid.';
+        amortErrEl.classList.remove('hidden');
+        return;
+      }
+
+      if (amortImport >= capitalStored) {
+        amortErrEl.textContent = 'L\'import a amortitzar ha de ser inferior al capital pendent.';
+        amortErrEl.classList.remove('hidden');
+        return;
+      }
+
+      // Build new schedule
+      amortData = buildAmortData(capitalStored, rStored, quotaStored, amortImport);
+
+      const mesosOrig  = tableData.length;
+      const mesosNous  = amortData.length;
+      const mesosEstalviats = mesosOrig - mesosNous;
+
+      // Total interests
+      const intOrig  = tableData.reduce((s, r) => s + r.interes, 0);
+      const intNous  = amortData.reduce((s, r) => s + r.interes, 0);
+      const intEstalviats = intOrig - intNous;
+
+      // New end date
+      const startDate = new Date();
+      startDate.setDate(1);
+      const novaData = new Date(startDate);
+      novaData.setMonth(novaData.getMonth() + mesosNous);
+      const novaDataLabel = novaData.toLocaleDateString('ca-ES', { month: 'long', year: 'numeric' });
+
+      // Old end date
+      const antigaData = new Date(startDate);
+      antigaData.setMonth(antigaData.getMonth() + mesosOrig);
+      const antigaDataLabel = antigaData.toLocaleDateString('ca-ES', { month: 'long', year: 'numeric' });
+
+      // Update savings cards
+      document.getElementById('amort-mesos-estalviats').textContent = mesosEstalviats + ' mesos';
+      document.getElementById('amort-mesos-sub').textContent =
+        (mesosEstalviats / 12).toFixed(1) + ' anys · ' + mesosNous + ' mesos restants';
+      document.getElementById('amort-int-estalviats').innerHTML =
+        fmt(intEstalviats) + '<span class="currency">€</span>';
+      document.getElementById('amort-int-sub').textContent =
+        'De ' + fmt(intOrig) + ' € a ' + fmt(intNous) + ' €';
+      document.getElementById('amort-nova-data').textContent = novaDataLabel;
+      document.getElementById('amort-data-sub').textContent = 'Abans: ' + antigaDataLabel;
+
+      // ── Investment comparison ──────────────────────────────────────────
+      // Scenario: invest amortImport at same annual rate (monthly compounding)
+      // during mesosNous months
+      const tinAnual = rStored * 12;
+      const capitalFinal = amortImport * Math.pow(1 + rStored, mesosNous);
+      const guanyInversio = capitalFinal - amortImport;
+
+      const amortWins = intEstalviats >= guanyInversio;
+      const diff = Math.abs(intEstalviats - guanyInversio);
+
+      document.getElementById('cmp-amort-value').textContent = fmt(intEstalviats) + ' €';
+      document.getElementById('cmp-amort-sub').textContent = 'Interessos estalviats';
+
+      document.getElementById('cmp-inv-value').textContent = fmt(guanyInversio) + ' €';
+      document.getElementById('cmp-inv-sub').textContent =
+        fmt(amortImport) + ' € → ' + fmt(capitalFinal) + ' € en ' + mesosNous + ' mesos';
+
+      const amortBox = document.getElementById('cmp-amort-box');
+      const invBox   = document.getElementById('cmp-inv-box');
+      const verdict  = document.getElementById('cmp-verdict');
+
+      if (amortWins) {
+        amortBox.className = 'comparison-option winner';
+        invBox.className   = 'comparison-option loser';
+        verdict.className  = 'comparison-verdict';
+        verdict.innerHTML  =
+          '<strong>Amortitzar surt millor</strong> per <strong>' + fmt(diff) + ' €</strong>. ' +
+          'Estalviar interessos de la hipoteca (' + fmt(intEstalviats) + ' €) supera el guany ' +
+          'd\'invertir els mateixos diners al ' + (tinAnual * 100).toFixed(2) + '% TIN (' + fmt(guanyInversio) + ' €).';
+      } else {
+        amortBox.className = 'comparison-option loser';
+        invBox.className   = 'comparison-option winner';
+        verdict.className  = 'comparison-verdict inv-wins';
+        verdict.innerHTML  =
+          '<strong>Invertir surt millor</strong> per <strong>' + fmt(diff) + ' €</strong>. ' +
+          'El guany de la inversió al ' + (tinAnual * 100).toFixed(2) + '% TIN (' + fmt(guanyInversio) + ' €) ' +
+          'supera els interessos estalviats amortitzant (' + fmt(intEstalviats) + ' €). ' +
+          'Però si el tipus d\'inversió és inferior al de la hipoteca, amortitzar sempre guanya.';
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
+      // Show section
+      document.getElementById('amort-savings-section').classList.remove('hidden');
+
+      // Render collapsible tables
+      refreshOrigTable(1);
+      refreshAmortTable(1);
+
+      // Scroll to savings section
+      document.getElementById('amort-savings-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ── Page range helper ────────────────────────────────────────────────────
+
+    function pageRange(current, total) {
+      if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+      const pages = [];
+      pages.push(1);
+      if (current > 3) pages.push('…');
+      for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+      if (current < total - 2) pages.push('…');
+      pages.push(total);
+      return pages;
+    }
+
+    // Allow Enter key to calculate
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') calcular();
+    });
+  </script>
+
+</body>
+</html>
