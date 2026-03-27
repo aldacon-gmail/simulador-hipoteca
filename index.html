@@ -558,6 +558,13 @@
           <div class="comparison-verdict" id="cmp-verdict"></div>
         </div>
 
+        <!-- When to amortize chart -->
+        <div class="card" id="amort-timing-card">
+          <div class="card-title">Quan és millor amortitzar?</div>
+          <p style="font-size:13px;color:#666;margin-bottom:20px">Interessos estalviats si fas l'amortització de <strong id="chart-import-label">—</strong> en cada un dels propers anys, en comptes de fer-la ara.</p>
+          <canvas id="amort-timing-chart" height="100"></canvas>
+        </div>
+
         <!-- Side-by-side comparison tables -->
         <div class="tables-parallel">
 
@@ -609,6 +616,7 @@
 
   </div><!-- /container -->
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const ROWS_PER_PAGE = 24;
     let tableData = [];
@@ -913,6 +921,9 @@
       }
       // ─────────────────────────────────────────────────────────────────────
 
+      // Timing chart
+      buildTimingChart(amortImport);
+
       // Show section
       document.getElementById('amort-savings-section').classList.remove('hidden');
 
@@ -935,6 +946,102 @@
       if (current < total - 2) pages.push('…');
       pages.push(total);
       return pages;
+    }
+
+    // ── Timing chart ─────────────────────────────────────────────────────────
+
+    let timingChartInstance = null;
+
+    function buildTimingChart(amortImport) {
+      const labels = [];
+      const dataPoints = [];
+
+      const mesosOrig = tableData.length;
+
+      // Interessos totals si amortitzes ARA (any 0 = referència)
+      const intNowTotal = amortData.reduce((s, r) => s + r.interes, 0);
+
+      // Per cada any futur (fins al final de la hipoteca original)
+      const maxAnys = Math.floor(mesosOrig / 12);
+      for (let any = 1; any <= maxAnys; any++) {
+        const offsetMesos = any * 12;
+        if (offsetMesos >= mesosOrig) break;
+
+        // Capital pendent en aquell mes
+        const row = tableData[offsetMesos - 1];
+        if (!row) break;
+        const capitalFutur = row.pendent;
+        if (capitalFutur <= amortImport) break;
+
+        // Interessos de la hipoteca original des d'aquell offset fins al final
+        const intRestantsOrig = tableData
+          .slice(offsetMesos)
+          .reduce((s, r) => s + r.interes, 0);
+
+        // Hipoteca amb amortització en aquell moment futur
+        const newCapital = capitalFutur - amortImport;
+        const mesosFuturRestants = mesosOrig - offsetMesos;
+        const futureAmortRows = buildTableData(newCapital, rStored, quotaStored, mesosFuturRestants);
+        const intFuturAmort = futureAmortRows.reduce((s, r) => s + r.interes, 0);
+
+        const intEstalviatsDelay = intRestantsOrig - intFuturAmort;
+
+        labels.push('Any ' + any);
+        dataPoints.push(parseFloat(intEstalviatsDelay.toFixed(2)));
+      }
+
+      // Valor de referència: interessos estalviats amortitzant ARA
+      const intEstalviatsAra = tableData.reduce((s, r) => s + r.interes, 0) -
+                               amortData.reduce((s, r) => s + r.interes, 0);
+
+      // Actualitzar label
+      document.getElementById('chart-import-label').textContent = fmt(amortImport) + ' €';
+
+      const ctx = document.getElementById('amort-timing-chart').getContext('2d');
+
+      if (timingChartInstance) {
+        timingChartInstance.destroy();
+        timingChartInstance = null;
+      }
+
+      timingChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Interessos estalviats (€)',
+            data: dataPoints,
+            backgroundColor: 'rgba(0,48,135,0.7)',
+            borderColor: '#003087',
+            borderWidth: 1.5,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ' ' + fmt(ctx.parsed.y) + ' € estalviats'
+              }
+            },
+            annotation: undefined
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: {
+                callback: v => fmt(v) + ' €'
+              },
+              grid: { color: '#f0f2f5' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
     }
 
     // Allow Enter key to calculate
